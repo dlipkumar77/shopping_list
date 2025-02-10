@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/models/grocery_item.dart';
 import '/data/categories.dart';
 import '/models/category.dart';
 
@@ -18,9 +19,17 @@ class _NewItemState extends State<NewItem> {
   void _saveItem() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      print(_enteredName);
-      print(_enteredQuantity);
-      print(_selectedCategory);
+      Navigator.of(context).pop(
+        GroceryItem(
+            id: DateTime.now().toString(),
+            name: _enteredName,
+            quantity: _enteredQuantity,
+            category: _selectedCategory),
+      );
+
+      // print(_enteredName);
+      // print(_enteredQuantity);
+      // print(_selectedCategory);
     }
   }
 
