@@ -62,11 +62,27 @@ class _NewItemState extends State<NewItem> {
                               Text(category.value.title),
                             ],
                           ),
-                        )
+                        ),
                     ], onChanged: (value) {}),
                   )
                 ],
-              )
+              ),
+              SizedBox(
+                height: 12,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Text('Reset'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Text('Add item'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
