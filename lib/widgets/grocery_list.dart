@@ -93,10 +93,24 @@ class _GroceryListState extends State<GroceryList> {
     */
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item);
     setState(() {
       _groceryItems.remove(item);
     });
+    final url = Uri.https('flutter-prep-e37d9-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      // optional : show snackbar or error message
+      setState(() {
+        //_groceryItems.remove(item);
+        //_groceryItems.add(item); //adding it this would diif place so we want correct index thats why we get first item index
+        _groceryItems.insert(index,
+            item); // previous lesson snackbar undo operation used this type ; this is add item specific index
+      });
+    }
   }
 
   @override
