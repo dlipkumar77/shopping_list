@@ -17,61 +17,74 @@ class _GroceryListState extends State<GroceryList> {
   //final List<GroceryItem> _groceryItems = [];
   List<GroceryItem> _groceryItems = [];
   // overide the _groceryItems so remove final
-  var _isLoading = true;
+  //var _isLoading = true;
+  late Future<List<GroceryItem>> _loadedItems;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _loadedItems = _loadItems();
   }
 
-  void _loadItems() async {
+  Future<List<GroceryItem>> _loadItems() async {
+    //void _loadItems() async {
     final url = Uri.https(
         'flutter-prep-e37d9-default-rtdb.firebaseio.com', 'shopping-list.json');
 
     //try- catch -> invalid domain, internet conncetion etc.,
-
-    try {
-      final response = await http.get(url);
-      if (response.statusCode > 400) {
-        setState(() {
-          _error = 'Failed to fetch data. Please try again later.';
-        });
-      }
-      // No data check
-      if (response.body == 'null') {
+    //remove tyr catch also future use
+    // try {
+    final response = await http.get(url);
+    if (response.statusCode > 400) {
+      throw Exception('Failed to fetch grocery items. Please try again later.');
+      // setState(() {
+      //   _error = 'Failed to fetch data. Please try again later.';
+      // });
+    }
+    // No data check
+    if (response.body == 'null') {
+      /*
+        //don'n need setState because future use
         setState(() {
           _isLoading = false;
         });
         return;
-      }
-      //final Map<String, Map<String, dynamic>> listData =  //  Unhandled Exception: type '_Map<String, dynamic>' so
-      final Map<String, dynamic> listData = json.decode(response.body);
-      final List<GroceryItem> _loadedItems = [];
-      for (final item in listData.entries) {
-        final categoryFind = categories.entries
-            .firstWhere(
-                (catItem) => catItem.value.title == item.value['category'])
-            .value;
-        _loadedItems.add(
-          GroceryItem(
-              id: item.key,
-              name: item.value['name'],
-              quantity: item.value['quantity'],
-              category: categoryFind),
-        );
-      }
+        */
+      return []; // return empy list
+    }
+    //final Map<String, Map<String, dynamic>> listData =  //  Unhandled Exception: type '_Map<String, dynamic>' so
+    final Map<String, dynamic> listData = json.decode(response.body);
+    final List<GroceryItem> _loadedItems = [];
+    for (final item in listData.entries) {
+      final categoryFind = categories.entries
+          .firstWhere(
+              (catItem) => catItem.value.title == item.value['category'])
+          .value;
+      _loadedItems.add(
+        GroceryItem(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            category: categoryFind),
+      );
+    }
+    return _loadedItems;
+    /*
+      Future use no needed this line
       setState(() {
         _groceryItems = _loadedItems;
         _isLoading = false;
       });
+      */
+    /*
+    //remove tyr catch also future use
     } catch (error) {
       setState(() {
         _error = 'Something went wrong! Please try again later.';
       });
     }
-
+     */
     /*
     key : nested map  // Map<String,Map> // "-OIjh1vdo9nK0F_t9iif":{"category":"Dairy","name":"milk","quantity":12}
     inner map dynamic values //  Map<String,dynamic> // {"category":"Dairy","name":"milk","quantity":12}
@@ -131,16 +144,24 @@ class _GroceryListState extends State<GroceryList> {
 
   @override
   Widget build(BuildContext context) {
+    /*
+    // empty data
+   code ship to future builder place
     Widget content = Center(
       child: Text('No items added yet'),
     );
 
+   code ship to future builder place
     if (_isLoading) {
       content = Center(
         child: CircularProgressIndicator(),
       );
     }
 
+    */
+
+    /*
+ code ship to future builder place
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
         itemCount: _groceryItems.length,
@@ -163,12 +184,15 @@ class _GroceryListState extends State<GroceryList> {
         ),
       );
     }
-
+      */
+    /*
+   code ship to future builder place
     if (_error != null) {
       content = Center(
         child: Text(_error!),
       );
     }
+    */
 
     return Scaffold(
       appBar: AppBar(
@@ -180,7 +204,42 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ],
       ),
-      body: content,
+      //body: content,
+      body: FutureBuilder(
+        future: _loadedItems,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          }
+          if (snapshot.data!.isEmpty) {
+            return Center(child: Text('No items added yet'));
+          }
+
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (ctx, index) => Dismissible(
+              onDismissed: (direction) {
+                _removeItem(snapshot.data![index]);
+              },
+              key: ValueKey(snapshot.data![index].id),
+              child: ListTile(
+                title: Text(snapshot.data![index].name),
+                leading: Container(
+                  width: 24,
+                  height: 24,
+                  color: snapshot.data![index].category.color,
+                ),
+                trailing: Text(
+                  snapshot.data![index].quantity.toString(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
