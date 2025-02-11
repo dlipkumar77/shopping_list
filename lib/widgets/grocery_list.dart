@@ -29,39 +29,48 @@ class _GroceryListState extends State<GroceryList> {
   void _loadItems() async {
     final url = Uri.https(
         'flutter-prep-e37d9-default-rtdb.firebaseio.com', 'shopping-list.json');
-    final response = await http.get(url);
-    if (response.statusCode > 400) {
+
+    //try- catch -> invalid domain, internet conncetion etc.,
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode > 400) {
+        setState(() {
+          _error = 'Failed to fetch data. Please try again later.';
+        });
+      }
+      // No data check
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+      //final Map<String, Map<String, dynamic>> listData =  //  Unhandled Exception: type '_Map<String, dynamic>' so
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> _loadedItems = [];
+      for (final item in listData.entries) {
+        final categoryFind = categories.entries
+            .firstWhere(
+                (catItem) => catItem.value.title == item.value['category'])
+            .value;
+        _loadedItems.add(
+          GroceryItem(
+              id: item.key,
+              name: item.value['name'],
+              quantity: item.value['quantity'],
+              category: categoryFind),
+        );
+      }
       setState(() {
-        _error = 'Failed to fetch data. Please try again later.';
-      });
-    }
-    // No data check
-    if (response.body == 'null') {
-      setState(() {
+        _groceryItems = _loadedItems;
         _isLoading = false;
       });
-      return;
+    } catch (error) {
+      setState(() {
+        _error = 'Something went wrong! Please try again later.';
+      });
     }
-    //final Map<String, Map<String, dynamic>> listData =  //  Unhandled Exception: type '_Map<String, dynamic>' so
-    final Map<String, dynamic> listData = json.decode(response.body);
-    final List<GroceryItem> _loadedItems = [];
-    for (final item in listData.entries) {
-      final categoryFind = categories.entries
-          .firstWhere(
-              (catItem) => catItem.value.title == item.value['category'])
-          .value;
-      _loadedItems.add(
-        GroceryItem(
-            id: item.key,
-            name: item.value['name'],
-            quantity: item.value['quantity'],
-            category: categoryFind),
-      );
-    }
-    setState(() {
-      _groceryItems = _loadedItems;
-      _isLoading = false;
-    });
 
     /*
     key : nested map  // Map<String,Map> // "-OIjh1vdo9nK0F_t9iif":{"category":"Dairy","name":"milk","quantity":12}
